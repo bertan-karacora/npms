@@ -53,23 +53,20 @@ def sample_sdf(in_path):
         print('\t------------ Error with {}: {}'.format(in_path, traceback.format_exc()))
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     #####################################################################
     # Set up
     #####################################################################
 
     OVERWRITE = False
 
-    parser = argparse.ArgumentParser(
-        description='Run boundary sampling'
-    )
-    parser.add_argument('-t', '-max_threads', dest='max_threads', type=int, default=-1)
+    parser = argparse.ArgumentParser(description="Run boundary sampling")
+    parser.add_argument("-t", "-max_threads", dest="max_threads", type=int, default=-1)
 
     args = parser.parse_args()
 
     try:
-        n_jobs = int(os.environ['SLURM_CPUS_ON_NODE'])
+        n_jobs = int(os.environ["SLURM_CPUS_ON_NODE"])
         assert args.max_threads != 0
         if args.max_threads > 0:
             n_jobs = args.max_threads
@@ -80,14 +77,14 @@ if __name__ == '__main__':
     print(f"Using {n_jobs} ...")
     print()
 
-    workspace_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    workspace_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
     external_root = os.path.abspath(os.path.join(workspace_dir, "..", "external"))
-    grid_script   = os.path.join(workspace_dir, "data_processing/sample_sdf.sh")
+    grid_script = os.path.join(workspace_dir, "data_processing/sample_sdf.sh")
 
     ##########################################
     # Options
-    dataset = "cape" #"amass"
+    dataset = "cape_single"  # "amass"
 
     if "mixamo" in dataset:
         mesh_watertight_filename = "mesh_watertight_poisson.ply"
@@ -99,33 +96,34 @@ if __name__ == '__main__':
     datasets_root = os.path.join(cfg_general.ROOT, "datasets")
 
     # -----------------------------------------------------------------------------------------------
-    
-    dataset_name = "CAPE-SHAPE-TRAIN-35id"
+
+    dataset_name = "CAPE-SHAPE-TRAIN-1id"
 
     # -----------------------------------------------------------------------------------------------
-    
+
     input(f"Dataset name: {dataset_name}?")
-    
+
     dataset_type = get_dataset_type_from_dataset_name(dataset_name)
     splits_dir = f"{cfg_general.splits_dir}_{dataset_type}"
 
     labels_tpose_json = os.path.join(datasets_root, splits_dir, dataset_name, "labels_tpose.json")
-    
+
     with open(labels_tpose_json, "r") as f:
         labels_tpose = json.loads(f.read())
 
     # -----------------------------------------------------------------------------------------------
-    
+
     path_to_samples = []
     for label in labels_tpose:
         path_to_samples.append(
-            os.path.join(datasets_root, label['dataset'], label['identity_name'], label['animation_name'], label['sample_id'])
+            os.path.join(
+                datasets_root, label["dataset"], label["identity_name"], label["animation_name"], label["sample_id"]
+            )
         )
 
     try:
         p = Pool(n_jobs)
         p.map(sample_sdf, path_to_samples)
-    finally: # To make sure processes are closed in the end, even if errors happen
+    finally:  # To make sure processes are closed in the end, even if errors happen
         p.close()
         p.join()
-

@@ -370,14 +370,13 @@ class Processor():
         print()
         print(f"Skipped {skipped_frames_due_to_loading_issue} frames")
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     OVERWRITE = False
     viz = False
 
     ################################################################################################
     # This is the name we'll give the processed dataset that we'll compute from the raw CAPE data
-    PROCESSED_DATASET_NAME = "cape"
+    PROCESSED_DATASET_NAME = "cape_single"
     ################################################################################################
 
     data_root = f"{cfg.ROOT}/data"
@@ -389,35 +388,38 @@ if __name__ == '__main__':
     ## If dataset_name is not None, process only the samples in the file
     ################################################################################################
     specific_sample_paths = []
-    
+
     # ----------------------------------------------------------------------------------------------
     dataset_name = None
     # dataset_name = "CAPE-POSE-TRAIN-35id-subsampled-10119ts"
     # ----------------------------------------------------------------------------------------------
-    
+
     if dataset_name is not None:
         import json
+
         labels_json = f"{datasets_root}/ZSPLITS_HUMAN/{dataset_name}/labels.json"
-        with open(labels_json, 'r') as f:
+        with open(labels_json, "r") as f:
             labels = json.loads(f.read())
 
         for label in labels:
-            sample_path = os.path.join(datasets_root, label['dataset'], label['identity_name'], label['animation_name'], label['sample_id'])
+            sample_path = os.path.join(
+                datasets_root, label["dataset"], label["identity_name"], label["animation_name"], label["sample_id"]
+            )
             specific_sample_paths.append(sample_path)
 
     ################################################################################################
     ################################################################################################
 
     # Data
-    data_root_dir = os.path.join(data_root, "cape_release")
+    data_root_dir = os.path.join(data_root, "cape_single")
 
     # Dataset
     processed_data_dir = os.path.join(datasets_root, PROCESSED_DATASET_NAME)
-    
+
     # Name for the meshes we're gonna create
-    PROCESSED_MESH_FILENAME      = "mesh_raw.ply"
+    PROCESSED_MESH_FILENAME = "mesh_raw.ply"
     PROCESSED_MESH_BODY_FILENAME = "mesh_body_raw.ply"
-    REAL_SCAN_MESH_FILENAME      = "mesh_real_scan.ply"
+    REAL_SCAN_MESH_FILENAME = "mesh_real_scan.ply"
 
     print("PROCESSED_DATASET_NAME", PROCESSED_DATASET_NAME)
     input("Continue?")
@@ -426,10 +428,8 @@ if __name__ == '__main__':
     ################################################################################################
     ################################################################################################
 
-    processor = Processor(
-        data_root_dir, processed_data_dir, specific_sample_paths
-    )
-    
+    processor = Processor(data_root_dir, processed_data_dir, specific_sample_paths)
+
     # ################################################################################################
     # # TRAIN set
     # ################################################################################################

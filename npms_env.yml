@@ -41,7 +41,8 @@ dependencies:
   - opencv
   - scikit-learn
   - scikit-image
-  
+  - matplotlib
+
   - pip:
     - freetype-py
     - pymcubes==0.1.0
@@ -52,4 +53,3 @@ dependencies:
     - smplx==0.1.24
     - chumpy
     - ninja
-

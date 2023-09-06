@@ -36,7 +36,7 @@ class ViewerFinal:
         # recording options:
         record_directly=False,
         frame_rate=30,
-        render_video_options="/rhome/ppalafox/workspace/render_video_options",
+        render_video_options="/render_video_options",
     ):
         self.labels = labels
         self.data_base_dir = data_base_dir

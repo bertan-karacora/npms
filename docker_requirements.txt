@@ -27,3 +27,4 @@ scikit-image
 smplx==0.1.24
 chumpy
 ninja
+matplotlib

@@ -58,17 +58,14 @@ def boundary_sampling_flow(in_path):
         print('\t------------ Error with {}: {}'.format(in_path, traceback.format_exc()))
 
 
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser(
-        description='Run boundary sampling'
-    )
-    parser.add_argument('-sigma', type=float, required=True)
-    parser.add_argument('-t', '-max_threads', dest='max_threads', type=int, default=-1)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run boundary sampling")
+    parser.add_argument("-sigma", type=float, required=True)
+    parser.add_argument("-t", "-max_threads", dest="max_threads", type=int, default=-1)
     args = parser.parse_args()
 
     try:
-        n_jobs = int(os.environ['SLURM_CPUS_ON_NODE'])
+        n_jobs = int(os.environ["SLURM_CPUS_ON_NODE"])
         assert args.max_threads != 0
         if args.max_threads > 0:
             n_jobs = args.max_threads
@@ -88,22 +85,19 @@ if __name__ == '__main__':
     # ----------------------------------------------------------------- #
     datasets_name = "datasets"
     # ----------------------------------------------------------------- #
-    dataset = "cape"
+    dataset = "cape_single"
     # ----------------------------------------------------------------- #
 
     print("DATASET:", dataset)
     #####################################################################
 
-    dataset_dir = f'{cfg.ROOT}/{datasets_name}/{dataset}'
-    
+    dataset_dir = f"{cfg.ROOT}/{datasets_name}/{dataset}"
+
     #####################################################################
     # Characters
     #####################################################################
     character_names = [
-        d for d in os.listdir(dataset_dir) 
-        if "ZSPLITS" not in d
-        and not d.endswith("json")
-        and not d.endswith("txt")
+        d for d in os.listdir(dataset_dir) if "ZSPLITS" not in d and not d.endswith("json") and not d.endswith("txt")
     ]
     character_names = sorted(character_names)
 
@@ -124,7 +118,7 @@ if __name__ == '__main__':
     print()
     for c in character_names:
         print(c)
-    
+
     input(f"Continue? {len(character_names)} characters")
 
     is_first = True
@@ -133,12 +127,11 @@ if __name__ == '__main__':
     # Process
     #####################################################################
     for character_name in character_names:
-
         print()
         print("character", character_name)
 
-        ROOT_CHARACTER = f'{cfg.ROOT}/datasets/{dataset}/{character_name}'
-            
+        ROOT_CHARACTER = f"{cfg.ROOT}/datasets/{dataset}/{character_name}"
+
         #####################################################################
         # Get reference sampling
         #####################################################################
@@ -150,34 +143,32 @@ if __name__ == '__main__':
                 is_first = False
 
             sampling_info_npz = np.load(sampling_info_path)
-            faces_ref       = sampling_info_npz['faces_ref']
-            bary_coords_ref = sampling_info_npz['bary_coords_ref']
-            random_noise    = sampling_info_npz['random_noise']
+            faces_ref = sampling_info_npz["faces_ref"]
+            bary_coords_ref = sampling_info_npz["bary_coords_ref"]
+            random_noise = sampling_info_npz["random_noise"]
 
         else:
             if is_first:
                 input("Sampling new")
                 is_first = False
-                
+
             ref_shape_path = os.path.join(ROOT_CHARACTER, "a_t_pose", "000000")
             ref_mesh_path = os.path.join(ref_shape_path, "mesh_normalized.ply")
             ref_mesh = trimesh.load_mesh(ref_mesh_path, process=False, maintain_order=True)
-            
+
             # Sample points in tpose, then use the barycentric coords to sample corresponding points in other meshes
-            _, faces_ref, bary_coords_ref, _ = pcd_utils.sample_points(
-                ref_mesh, sample_num, return_barycentric=True
-            )
+            _, faces_ref, bary_coords_ref, _ = pcd_utils.sample_points(ref_mesh, sample_num, return_barycentric=True)
 
             # Random noise along the normals (has to be the same for all samples to get corresp)
-            random_noise = 2.0 * np.random.rand(sample_num, 1) - 1.0 # [-1, 1]
+            random_noise = 2.0 * np.random.rand(sample_num, 1) - 1.0  # [-1, 1]
             random_noise = args.sigma * random_noise
-            
+
             # Store
             np.savez(
                 sampling_info_path,
                 faces_ref=faces_ref,
-                bary_coords_ref=bary_coords_ref, 
-                random_noise=random_noise, 
+                bary_coords_ref=bary_coords_ref,
+                random_noise=random_noise,
             )
 
         #####################################################################
@@ -186,8 +177,7 @@ if __name__ == '__main__':
 
         try:
             p = Pool(n_jobs)
-            p.map(boundary_sampling_flow, glob.glob(ROOT_CHARACTER + '/*/*/'))
+            p.map(boundary_sampling_flow, glob.glob(ROOT_CHARACTER + "/*/*/"))
         finally:
             p.close()
             p.join()
-        

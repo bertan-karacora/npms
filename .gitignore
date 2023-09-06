@@ -151,3 +151,10 @@ run_generate_iflownet.sh
 
 # pkl
 *.pkl
+
+# data
+**/data
+**/datasets
+
+# smpl model (requires registration on their website etc.)
+**/smpl

@@ -7,6 +7,8 @@ os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
 # os.environ['PYOPENGL_PLATFORM'] = 'egl'
 # os.environ['EGL_DEVICE_ID'] = os.environ['SLURM_STEP_GPUS']
 
+import torch  # https://stackoverflow.com/questions/65710713/importerror-libc10-so-cannot-open-shared-object-file-no-such-file-or-director
+
 import numpy as np
 from scipy.linalg import expm, norm
 from scipy.spatial import cKDTree as KDTree
@@ -372,36 +374,37 @@ if __name__ == "__main__":
     znear=0.05
     zfar=5.0
 
-    ROOT = f'/cluster/lothlann/ppalafox/datasets'
-    
+    ROOT = f"/app/datasets"
+
     # -----------------------------------------------------------------------------------------------
     ####################################
     # MIXAMO
     ####################################
-    dataset_name = "CAPE-POSE-TRAIN-35id-subsampled-10119ts"
+    dataset_name = "CAPE-POSE-TRAIN-1id"
 
     # Mesh type used to generate the data
-    MESH_FILENAME = 'mesh_normalized.ply' # Select between 'mesh_normalized.ply' and 'mesh_real_scan.ply' (for CAPE)
-    
-    assert MESH_FILENAME == 'mesh_normalized.ply' or MESH_FILENAME == 'mesh_real_scan.ply'
-    
+    MESH_FILENAME = "mesh_normalized.ply"  # Select between 'mesh_normalized.ply' and 'mesh_real_scan.ply' (for CAPE)
+
+    assert MESH_FILENAME == "mesh_normalized.ply" or MESH_FILENAME == "mesh_real_scan.ply"
+
     print()
     print(f"Using {MESH_FILENAME}!")
     print()
 
-    if "cape" in dataset_name.lower() and MESH_FILENAME != 'mesh_real_scan.ply':
-        print("Use real scans for CAPE!")
-        exit()
+    # if "cape" in dataset_name.lower() and MESH_FILENAME != "mesh_real_scan.ply":
+    #     print("Use real scans for CAPE!")
+    #     exit()
 
     # -----------------------------------------------------------------------------------------------
 
     from utils.parsing_utils import get_dataset_type_from_dataset_name
+
     dataset_type = get_dataset_type_from_dataset_name(dataset_name)
     splits_dir = f"{cfg.splits_dir}_{dataset_type}"
 
-    labels_json       = os.path.join(ROOT, splits_dir, dataset_name, "labels.json")
+    labels_json = os.path.join(ROOT, splits_dir, dataset_name, "labels.json")
     labels_tpose_json = os.path.join(ROOT, splits_dir, dataset_name, "labels_tpose.json")
-    
+
     with open(labels_json, "r") as f:
         labels = json.loads(f.read())
 
@@ -417,7 +420,7 @@ if __name__ == "__main__":
     paths_to_process = []
     for label in labels:
         paths_to_process.append(
-            os.path.join(ROOT, label['dataset'], label['identity_name'], label['animation_name'], label['sample_id'])
+            os.path.join(ROOT, label["dataset"], label["identity_name"], label["animation_name"], label["sample_id"])
         )
 
     try:

@@ -18,7 +18,7 @@ from contextlib import closing
 import multiprocessing as mp
 from multiprocessing import Pool
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import config as cfg
 from utils.pcd_utils import BBox
 
@@ -27,12 +27,11 @@ info = mp.get_logger().info
 
 
 def compute_global_bbox():
-
     logger = mp.log_to_stderr()
     logger.setLevel(logging.INFO)
 
     # create shared array for bbox
-    shared_bbox = mp.Array(ctypes.c_double, N*M)
+    shared_bbox = mp.Array(ctypes.c_double, N * M)
     bbox = to_numpy_array(shared_bbox)
 
     # By updating bbox, we uppdate shared_bbox as well, since they share memory
@@ -45,7 +44,7 @@ def compute_global_bbox():
     with closing(mp.Pool(processes=n_jobs, initializer=init, initargs=(shared_bbox,))) as p:
         # many processes access the same slice
         p.map_async(update_bbox, sample_dirs)
-    
+
     p.join()
     p.close()
 
@@ -54,10 +53,9 @@ def compute_global_bbox():
     final_bbox = final_bbox.reshape((N, M))
     #####################################################################################
     #####################################################################################
-        
+
     # assert np.all(np.isfinite(final_bbox)), final_bbox
 
-    
     # Compute current extent
     p_min, p_max = final_bbox[0], final_bbox[1]
     non_cube_extent = p_max - p_min
@@ -80,7 +78,7 @@ def compute_global_bbox():
 
     # Store bbox
     print("Dumping into json file:", dataset_bbox_json)
-    with open(dataset_bbox_json, 'w') as f:
+    with open(dataset_bbox_json, "w") as f:
         json.dump(final_bbox.tolist(), f, indent=4)
 
     return final_bbox
@@ -88,7 +86,7 @@ def compute_global_bbox():
 
 def init(shared_bbox_):
     global shared_bbox
-    shared_bbox = shared_bbox_ # must be inherited, not passed as an argument
+    shared_bbox = shared_bbox_  # must be inherited, not passed as an argument
 
 
 def to_numpy_array(mp_arr):
@@ -96,12 +94,10 @@ def to_numpy_array(mp_arr):
 
 
 def update_bbox(sample_dir):
-
     print(sample_dir)
 
     """synchronized."""
-    with shared_bbox.get_lock(): # synchronize access
-
+    with shared_bbox.get_lock():  # synchronize access
         info(f"start {sample_dir}")
 
         mesh_raw_path = os.path.join(sample_dir, "mesh_raw.ply")
@@ -128,37 +124,36 @@ def update_bbox(sample_dir):
 
         info(f"end {sample_dir}")
 
-    
+
 ################################################################################################
 ################################################################################################
 ################################################################################################
 
+
 def normalize_mesh(mesh):
     # Global normalization
     if compute_bbox:
-        vertices = (mesh.vertices - p_min) / extent # now we're in [-1, 1]
-        vertices = vertices - 0.5                   # now in [-0.5, 0.5] 
+        vertices = (mesh.vertices - p_min) / extent  # now we're in [-1, 1]
+        vertices = vertices - 0.5  # now in [-0.5, 0.5]
     else:
         vertices = mesh.vertices - trans
         vertices = scale * vertices
-    
+
     mesh.vertices = vertices
     return mesh
 
 
 def normalize_meshes(sample_dir):
     try:
-
         # Normal mesh
         mesh_raw_path = os.path.join(sample_dir, "mesh_raw.ply")
         if os.path.exists(mesh_raw_path):
-            
             normalized_mesh_path = os.path.join(sample_dir, "mesh_normalized.ply")
-            
-            if OVERWRITE or not os.path.isfile(normalized_mesh_path):    
+
+            if OVERWRITE or not os.path.isfile(normalized_mesh_path):
                 mesh = trimesh.load_mesh(mesh_raw_path, process=False, maintain_order=True)
-                mesh = normalize_mesh(mesh)    
-                trimesh.Trimesh.export(mesh, normalized_mesh_path, 'ply')
+                mesh = normalize_mesh(mesh)
+                trimesh.Trimesh.export(mesh, normalized_mesh_path, "ply")
                 print("\tWriting mesh into:", normalized_mesh_path)
 
         if VIZ:
@@ -171,8 +166,8 @@ def normalize_meshes(sample_dir):
         real_scan_path = os.path.join(sample_dir, "mesh_real_scan.ply")
         if os.path.isfile(real_scan_path):
             mesh = trimesh.load_mesh(real_scan_path, process=False, maintain_order=True)
-            mesh = normalize_mesh(mesh)        
-            trimesh.Trimesh.export(mesh, real_scan_path, 'ply')
+            mesh = normalize_mesh(mesh)
+            trimesh.Trimesh.export(mesh, real_scan_path, "ply")
             print("\t\tWriting real scan  into:", real_scan_path)
         ###################################################################################
 
@@ -180,24 +175,22 @@ def normalize_meshes(sample_dir):
         # Body mesh if exists
         body_mesh_raw_path = os.path.join(sample_dir, "mesh_body_raw.ply")
         if os.path.isfile(body_mesh_raw_path):
-            
             body_mesh_normalized_path = os.path.join(sample_dir, "mesh_body_normalized.ply")
-            
+
             if OVERWRITE_BODY or not os.path.isfile(body_mesh_normalized_path):
                 mesh = trimesh.load_mesh(body_mesh_raw_path, process=False, maintain_order=True)
-                mesh = normalize_mesh(mesh)        
-                trimesh.Trimesh.export(mesh, body_mesh_normalized_path, 'ply')
+                mesh = normalize_mesh(mesh)
+                trimesh.Trimesh.export(mesh, body_mesh_normalized_path, "ply")
                 print("\t\tWriting body mesh into:", body_mesh_normalized_path)
         ###################################################################################
 
     except:
-        print('\t------------ Error with {}: {}'.format(sample_dir, traceback.format_exc()))
+        print("\t------------ Error with {}: {}".format(sample_dir, traceback.format_exc()))
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     try:
-        n_jobs = int(os.environ['SLURM_CPUS_ON_NODE'])
+        n_jobs = int(os.environ["SLURM_CPUS_ON_NODE"])
     except:
         n_jobs = 4
 
@@ -207,41 +200,37 @@ if __name__ == '__main__':
     mp.freeze_support()
 
     p_min = -0.5
-    p_max =  0.5
+    p_max = 0.5
 
     # Flag to visualize meshes for debugging
     VIZ = False
 
     if VIZ:
-        unit_bbox = BBox.compute_bbox_from_min_point_and_max_point(
-            np.array([p_min]*3), np.array([p_max]*3)
-        )
+        unit_bbox = BBox.compute_bbox_from_min_point_and_max_point(np.array([p_min] * 3), np.array([p_max] * 3))
 
-        world_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
-            size=0.5, origin=[0, 0, 0]
-        )
+        world_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5, origin=[0, 0, 0])
 
     #####################################################################################
     #####################################################################################
-    dataset = 'cape'
+    dataset = "cape_single"
     #####################################################################################
     #####################################################################################
 
     OVERWRITE_BBOX_COMPUTATION = False
-    OVERWRITE                  = False # for the general mesh
-    OVERWRITE_BODY             = False # for the body mesh, in case the dataset has such meshes
+    OVERWRITE = False  # for the general mesh
+    OVERWRITE_BODY = False  # for the body mesh, in case the dataset has such meshes
 
     #####################################################################################
-    compute_bbox = False # Keep it to False, unless you wanna play with the normalization etc.
+    compute_bbox = False  # Keep it to False, unless you wanna play with the normalization etc.
     #####################################################################################
-    
+
     if not compute_bbox:
         input("Using predefined bbox and scale to normalize - Recommened!")
     else:
         input("Computing dataset-specific bbox to normalize")
 
     target_animations = []
-        
+
     if compute_bbox:
         # bbox array dimensions ([[bbox_min], [bbox_max]])
         N, M = 2, 3
@@ -252,25 +241,25 @@ if __name__ == '__main__':
         # scale
         scale = 1.0
         trans = 0.0
-    
-        if 'mano' in dataset:
+
+        if "mano" in dataset:
             scale = 0.75
             bbox_displacement = 0.0
-        
-        elif 'cape' in dataset:
+
+        elif "cape" in dataset:
             scale = 0.4
             bbox_displacement = 0.0
 
             # Load our precomputed bbox to normalize the dataset to reside within a unit cube
             predefined_bbox_json_path = os.path.join("bbox.json")
             assert os.path.isfile(predefined_bbox_json_path)
-            
-            with open(predefined_bbox_json_path, 'r') as f:
+
+            with open(predefined_bbox_json_path, "r") as f:
                 predefined_bbox = json.loads(f.read())
                 predefined_bbox = np.array(predefined_bbox)
-            
-            trans = (predefined_bbox[0] + predefined_bbox[1]) / 2.
-        
+
+            trans = (predefined_bbox[0] + predefined_bbox[1]) / 2.0
+
         else:
             print("dataset is not implemented")
             exit()
@@ -294,14 +283,14 @@ if __name__ == '__main__':
             print()
             input("Need to compute bbox. Do I go ahead?")
             bbox = compute_global_bbox()
-        
+
         else:
             print()
             input("Already had bbox - Load it?")
-            with open(dataset_bbox_json, 'r') as f:
+            with open(dataset_bbox_json, "r") as f:
                 bbox = json.loads(f.read())
                 bbox = np.array(bbox)
-        
+
         print("bbox ready!")
         print(bbox)
 
@@ -309,9 +298,9 @@ if __name__ == '__main__':
     # 2. Normalize meshes to lie within a common bbox
     ########################################################################################################
     print()
-    print("#"*60)
+    print("#" * 60)
     print(f"Will normalize {len(sample_dirs)} meshes!")
-    print("#"*60)
+    print("#" * 60)
     input("Continue?")
 
     if compute_bbox:
@@ -322,5 +311,4 @@ if __name__ == '__main__':
     p_norm = Pool(n_jobs)
     p_norm.map(normalize_meshes, sample_dirs)
 
-    print("Done!")    
-    
+    print("Done!")

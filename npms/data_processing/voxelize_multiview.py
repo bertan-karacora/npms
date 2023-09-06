@@ -11,6 +11,7 @@ import numpy as np
 from scipy.linalg import expm, norm
 from scipy.spatial import cKDTree as KDTree
 import time
+import torch  # https://stackoverflow.com/questions/65710713/importerror-libc10-so-cannot-open-shared-object-file-no-such-file-or-director
 from tqdm import tqdm
 import cv2
 import math
@@ -411,12 +412,12 @@ if __name__ == "__main__":
 
     ########################################################################
 
-    ROOT = f'/cluster/lothlann/ppalafox/datasets'
+    ROOT = f"datasets"
 
     # -----------------------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------------------
 
-    dataset_name = "CAPE-POSE-TRAIN-35id-subsampled-10119ts"
+    dataset_name = "cape_single"
 
     # Mesh type used to generate the data
     MESH_FILENAME = 'mesh_normalized.ply' # Select between 'mesh_normalized.ply' and 'mesh_real_scan.ply' (for CAPE)
@@ -429,14 +430,14 @@ if __name__ == "__main__":
     print("----------------------------")
     print()
 
-    if "cape" in dataset_name.lower() and "TEST" in dataset_name and MESH_FILENAME != 'mesh_real_scan.ply':
-        print("Use real scans for CAPE!")
-        exit()
+    # if "cape" in dataset_name.lower() and "TEST" in dataset_name and MESH_FILENAME != 'mesh_real_scan.ply':
+    #     print("Use real scans for CAPE!")
+    #     exit()
 
     # Whether to save some additional data for the baselines
-    save_color_image = False
-    save_point_image = False
-    save_world_to_camera = False
+    save_color_image = True
+    save_point_image = True
+    save_world_to_camera = True
 
     if "TEST" in dataset_name:
         save_color_image = True
